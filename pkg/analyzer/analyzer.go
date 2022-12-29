@@ -62,6 +62,8 @@ var (
 	pulumiNameRegex                                 = regexp.MustCompile(`\s*name\s*:`)
 	pulumiRuntimeRegex                              = regexp.MustCompile(`\s*runtime\s*:`)
 	pulumiResourcesRegex                            = regexp.MustCompile(`\s*resources\s*:`)
+	pulumiPreviewConfigRegex                        = regexp.MustCompile("\\s*\"config\"\\s*:")
+	pulumiPreviewStepsRegex                         = regexp.MustCompile("\\s*\"steps\"\\s*:")
 	serverlessServiceRegex                          = regexp.MustCompile(`\s*service\s*:`)
 	serverlessProviderRegex                         = regexp.MustCompile(`\s*provider\s*:`)
 )
@@ -93,7 +95,7 @@ var (
 		"kubernetes":           {"kubernetes"},
 		"openapi":              {"openapi"},
 		"terraform":            {"terraform", "cdkTf"},
-		"pulumi":               {"pulumi"},
+		"pulumi":               {"pulumi", "pulumipreview"},
 		"serverlessfw":         {"serverlessfw"},
 	}
 )
@@ -232,6 +234,12 @@ var types = map[string]regexSlice{
 			pulumiNameRegex,
 			pulumiRuntimeRegex,
 			pulumiResourcesRegex,
+		},
+	},
+	"pulumipreview": {
+		[]*regexp.Regexp{
+			pulumiPreviewConfigRegex,
+			pulumiPreviewStepsRegex,
 		},
 	},
 	"serverlessfw": {

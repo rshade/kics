@@ -7,6 +7,7 @@ import (
 	"github.com/Checkmarx/kics/pkg/model"
 	"github.com/Checkmarx/kics/pkg/resolver/file"
 	"github.com/mailru/easyjson"
+	"github.com/rs/zerolog/log"
 )
 
 // Parser defines a parser type
@@ -40,11 +41,17 @@ func (p *Parser) Parse(_ string, fileContent []byte) ([]model.Document, []int, e
 	jLine := initializeJSONLine(fileContent)
 	kicsJSON := jLine.setLineInfo(r)
 
-	// Try to parse JSON as Terraform plan
+	log.Info().Msg("Try to parse JSON as Terraform plan")
 	kicsPlan, err := parseTFPlan(kicsJSON)
 	if err != nil {
-		// JSON is not a tf plan
-		return []model.Document{kicsJSON}, []int{}, nil
+		log.Info().Msgf("JSON is not a tf plan, Try Pulumi: %s", err)
+		pulumiPlan, perr := parsePulumiPlan(fileContent)
+		if perr != nil {
+			log.Info().Msgf("JSON is not a Pulumi Preview: %s", perr)
+			return []model.Document{kicsJSON}, []int{}, nil
+		}
+		p.shouldIdent = true
+		return []model.Document{pulumiPlan}, []int{}, nil
 	}
 
 	p.shouldIdent = true
@@ -64,7 +71,15 @@ func (p *Parser) GetKind() model.FileKind {
 
 // SupportedTypes returns types supported by this parser, which are cloudFormation
 func (p *Parser) SupportedTypes() map[string]bool {
-	return map[string]bool{"cloudformation": true, "openapi": true, "azureresourcemanager": true, "terraform": true, "kubernetes": true}
+	return map[string]bool{
+		"cloudformation":       true,
+		"openapi":              true,
+		"azureresourcemanager": true,
+		"terraform":            true,
+		"kubernetes":           true,
+		"pulumi":               true,
+		"pulumipreview":        true,
+	}
 }
 
 // GetCommentToken return an empty string, since JSON does not have comment token
